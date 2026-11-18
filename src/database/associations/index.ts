@@ -3,7 +3,6 @@ import { Course } from '../../courses/entities/course.entity';
 import { Category } from '../../categories/entities/category.entity';
 
 export function initializeAssociations() {
-  // User - Course
   User.hasMany(Course, {
     foreignKey: 'tutorId',
     as: 'courses',
