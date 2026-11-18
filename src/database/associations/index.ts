@@ -14,7 +14,6 @@ export function initializeAssociations() {
     as: 'tutor',
   });
 
-  // Category - Course
   Category.hasMany(Course, {
     foreignKey: 'categoryId',
     as: 'courses',
