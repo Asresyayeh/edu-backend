@@ -5,7 +5,10 @@ import {
   MinLength,
   MaxLength,
   IsOptional,
+  IsIn,
 } from 'class-validator';
+
+import type { UserRole } from '../entities/user.entity';
 
 export class CreateUserDto {
   @IsString()
@@ -29,4 +32,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsOptional()
+  @IsIn(['student', 'tutor', 'parent', 'admin'])
+  role?: UserRole;
 }

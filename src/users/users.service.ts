@@ -3,9 +3,11 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/sequelize';
+import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -16,6 +18,8 @@ export class UsersService {
   constructor(
     @InjectModel(User)
     private readonly userModel: typeof User,
+
+    private readonly jwtService: JwtService,
   ) {}
 
   // CREATE: Register a new user
@@ -38,11 +42,48 @@ export class UsersService {
       email,
       passwordHash,
       phone: createUserDto.phone,
-      role: 'student',
+      role: createUserDto.role ?? 'student',
       isActive: true,
     });
 
     return this.toPublicUser(user);
+  }
+
+  // LOGIN: Authenticate user and generate JWT
+  async login(email: string, password: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await this.userModel.findOne({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+
+    if (!passwordMatches) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Your account is inactive');
+    }
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    return {
+      message: 'Login successful',
+      accessToken,
+      user: this.toPublicUser(user),
+    };
   }
 
   // READ: Get all users
